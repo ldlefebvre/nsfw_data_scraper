@@ -1,4 +1,88 @@
-# NSFW Data Scraper
+Laurent's Read Me
+
+Codes to run in terminal:
+
+
+docker build --no-cache --platform linux/amd64 -t nsfw_data_scraper:custom .
+
+docker run -it --rm --platform linux/amd64 -v "$(pwd):/root/nsfw_data_scraper" nsfw_data_scraper:custom /bin/bash
+
+bash /root/nsfw_data_scraper/scripts/runall.sh
+
+
+
+.config/gallery-dl/config.json
+Should look like this (get the data from reddit api developer for script key):
+
+{
+  "extractor": {
+    "reddit": {
+      "username": "",
+      "password": "",
+      "client_id": "",
+      "client_secret": "",
+      "filter": "nsfw:true"
+    }
+  }
+}
+
+
+Needed to run this in terminal:
+brew install yt-dlp
+brew install bc
+
+At the location of the directory when doing: head -n 1 "$(which gallery-dl)"
+Do the following: /usr/local/Cellar/gallery-dl/1.27.7/libexec/bin/python -m pip install yt-dlp
+brew install ffmpeg
+
+
+Dockerfile 
+Should look like this for mac OS with M1 Chip:
+
+FROM --platform=linux/amd64 ubuntu:18.04
+
+RUN apt-get update && apt-get install -y \
+    wget \
+    rsync \
+    imagemagick \
+    default-jre \
+    python3 \
+    python3-pip \
+    bash \
+    qemu-user-static \
+    locales \
+    ffmpeg \
+    bc \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+RUN update-binfmts --enable qemu-x86_64
+
+RUN pip3 install --upgrade gallery-dl yt-dlp
+
+WORKDIR /root/nsfw_data_scraper
+
+COPY ./ /root/nsfw_data_scraper
+
+RUN chmod +x /root/nsfw_data_scraper/scripts/*.sh
+
+ENTRYPOINT ["/bin/bash", "-c", "echo Hello from the container! && exec /bin/bash"]
+
+
+
+
+
+
+
+
+
+
+
+# READ ME FROM NSFW Data Scraper
 
 ## Note: use with caution - the dataset is noisy
 
