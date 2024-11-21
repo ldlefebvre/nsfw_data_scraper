@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     locales \
     ffmpeg \
     bc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Generate and configure locales

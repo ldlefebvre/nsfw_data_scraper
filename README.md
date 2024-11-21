@@ -53,6 +53,7 @@ RUN apt-get update && apt-get install -y \
     locales \
     ffmpeg \
     bc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 RUN locale-gen en_US.UTF-8
