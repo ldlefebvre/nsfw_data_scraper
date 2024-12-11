@@ -1,26 +1,36 @@
-Laurent's Read Me
+# Laurent's Read Me
+
+
+Launch the vpn to avoid ip address block if needed such as with Norton Security VPN or such. How to check current IP in terminal:
+curl ifconfig.me
 
 Codes to run in terminal:
 
+To listen to files added in directory to change name in case it contains None to avoid overwriting:
+chmod +x scripts/file_watcher.sh
+./scripts/file_watcher.sh
 
+Leave this running in a tab then open a new tab to run the following:
 docker build --no-cache --platform linux/amd64 -t nsfw_data_scraper:custom .
-
+gallery-dl --clear-cache reddit
 docker run -it --rm --platform linux/amd64 -v "$(pwd):/root/nsfw_data_scraper" nsfw_data_scraper:custom /bin/bash
-
 bash /root/nsfw_data_scraper/scripts/runall.sh
 
 
-
 .config/gallery-dl/config.json
-Should look like this (get the data from reddit api developer for script key):
+Should look like this (get the data from reddit api developer for installed app key):
+Current Redirect URL: https://localhost:6414
+Have to create an installed app in reddit developer to get credentials
+Get the refresh token with gallery-dl oauth:reddit
 
 {
   "extractor": {
     "reddit": {
       "username": "",
       "password": "",
-      "client_id": "",
-      "client_secret": "",
+      "client-id": "",
+      "refresh-token": "",
+      "user-agent": "Python:gallery-dl:v1.0 (by /u/username)",
       "filter": "nsfw:true"
     }
   }
@@ -30,10 +40,25 @@ Should look like this (get the data from reddit api developer for script key):
 Needed to run this in terminal:
 brew install yt-dlp
 brew install bc
+brew install telnet
+brew install nmap
+brew install fswatch
 
 At the location of the directory when doing: head -n 1 "$(which gallery-dl)"
-Do the following: /usr/local/Cellar/gallery-dl/1.27.7/libexec/bin/python -m pip install yt-dlp
+Do the following depending on directory gotten above: /usr/local/Cellar/gallery-dl/1.27.7/libexec/bin/python -m pip install yt-dlp
 brew install ffmpeg
+
+brew install selenium
+sudo rm -rf /Applications/Firefox.app
+brew install --cask firefox
+brew install geckodriver
+brew install tor
+brew services start tor
+brew install torsocks
+
+
+Create the python script for selenium: fallback_selenium.py
+
 
 
 Dockerfile 
@@ -54,6 +79,9 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     bc \
     curl \
+    tor \
+    firefox \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 RUN locale-gen en_US.UTF-8
@@ -63,20 +91,48 @@ ENV LC_ALL=en_US.UTF-8
 
 RUN update-binfmts --enable qemu-x86_64
 
-RUN pip3 install --upgrade gallery-dl yt-dlp
+RUN pip3 install --upgrade gallery-dl yt-dlp selenium requests beautifulsoup4
+
+RUN wget -q "https://github.com/mozilla/geckodriver/releases/latest/download/geckodriver-v0.33.0-linux64.tar.gz" -O geckodriver.tar.gz \
+    && tar -xzf geckodriver.tar.gz -C /usr/local/bin \
+    && rm geckodriver.tar.gz
+
+RUN echo "SOCKSPort 9050" >> /etc/tor/torrc && \
+    echo "Log notice stdout" >> /etc/tor/torrc
 
 WORKDIR /root/nsfw_data_scraper
 
 COPY ./ /root/nsfw_data_scraper
 
+COPY .config/gallery-dl/config.json /root/.config/gallery-dl/config.json
+
+RUN chmod 644 /root/.config/gallery-dl/config.json
+
 RUN chmod +x /root/nsfw_data_scraper/scripts/*.sh
 
-ENTRYPOINT ["/bin/bash", "-c", "echo Hello from the container! && exec /bin/bash"]
+CMD service tor start && /bin/bash
 
 
 
+Other useful commands:
+killall -9 tor
+lsof -i :9050
+ps aux | grep tor
+kill -9 <PID>
+tor &
+
+brew services restart tor
 
 
+COOKIE=$(cat /usr/local/var/lib/tor/control_auth_cookie | xxd -p -c 64 | tr -d '\n')
+echo -e "AUTHENTICATE $COOKIE\nSIGNAL NEWNYM\nQUIT" | nc 127.0.0.1 9051
+
+python3 -m venv venv
+source venv/bin/activate
+pip install selenium requests beautifulsoup4
+pip install pysocks
+pip install --upgrade pip
+pip install -U gallery-dl
 
 
 

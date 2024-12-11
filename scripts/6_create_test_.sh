@@ -105,11 +105,11 @@ data_dir="$base_dir/data"
 
 # Define class names
 declare -a class_names=(
-    "neutral"
-    "drawings"
+#    "neutral"
+#    "drawings"
     "sexy"
-    "porn"
-    "hentai"
+#    "porn"
+#    "hentai"
 )
 
 # Define training and test directories

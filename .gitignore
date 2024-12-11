@@ -7,3 +7,6 @@ scripts/rip.properties
 scripts/ripme.jar
 scripts/history.json
 gallery-dl
+venv
+output
+prior_dockerfile.txt
