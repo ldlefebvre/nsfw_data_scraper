@@ -36,6 +36,9 @@ Get the refresh token with gallery-dl oauth:reddit
       "user-agent": "Python:gallery-dl:v1.0 (by /u/username)",
       "filter": "nsfw:true"
     }
+  },
+  "http": {
+    "proxy": "socks5://127.0.0.1:9050"
   }
 }
 
