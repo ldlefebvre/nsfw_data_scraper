@@ -2604,11 +2604,12 @@ def scrape_with_selenium(url, output_dir):
     }
 
     options.set_capability("proxy", proxy_dict)
-    service = Service("/usr/local/bin/geckodriver")
+#    service = Service("/usr/local/bin/geckodriver")
 
     driver = webdriver.Firefox(
         options=options,
-        service=service
+        executable_path="/usr/local/bin/geckodriver"
+#        service=service
     )
 
     try:
