@@ -517,6 +517,149 @@
 #done
 
 
+##!/bin/bash
+#
+## Directories
+#scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+#base_dir="$(dirname "$scripts_dir")"
+#raw_data_dir="$base_dir/raw_data"
+#
+## Class names
+#declare -a class_names=(
+##    "neutral"
+##    "porn"
+##    "drawings"
+#    "sexy"
+##    "hentai"
+#)
+#
+## Rotate Tor Circuit
+#rotate_tor_circuit() {
+#    cookie_file="/usr/local/var/lib/tor/control_auth_cookie"
+##    if [[ -f "$cookie_file" ]]; then
+##        COOKIE=$(cat "$cookie_file" | xxd -p -c 64 | tr -d '\n')
+##        echo "Rotating Tor circuit..."
+##        echo -e "AUTHENTICATE \"$COOKIE\"\nSIGNAL NEWNYM\nQUIT" | nc 127.0.0.1 9051
+##        sleep 5
+##    else
+##    if [[ -f "$cookie_file" ]]; then
+##        COOKIE=$(xxd -ps "$cookie_file" | tr -d '\n')  # Extract hex string
+##        if [[ ${#COOKIE} -ne 64 ]]; then
+##            echo "Error: Authentication cookie length is invalid (${#COOKIE}). Expected 64."
+##            exit 1
+##        fi
+##
+##        echo "Rotating Tor circuit..."
+##        echo -e "AUTHENTICATE \"$COOKIE\"\nSIGNAL NEWNYM\nQUIT" | nc 127.0.0.1 9051
+##        sleep 5
+##    else
+#    if [[ -f "$cookie_file" ]]; then
+#        # Extract the hex string from the cookie file
+#        COOKIE=$(xxd -ps "$cookie_file" | tr -d '\n')
+#
+#        # Validate the cookie length
+#        if [[ ${#COOKIE} -ne 64 ]]; then
+#            echo "Error: Authentication cookie length is invalid (${#COOKIE}). Expected 64."
+#            exit 1
+#        fi
+#
+##        echo "Rotating Tor circuit..."
+#        # Pass the raw cookie without extra quotes
+##        echo -e "AUTHENTICATE $COOKIE\nSIGNAL NEWNYM\nQUIT" | nc 127.0.0.1 9051
+#
+##        sleep 5
+#    else
+#        echo "Tor authentication cookie not found at $cookie_file"
+#        exit 1
+#    fi
+#}
+#
+## Download function
+#download_with_curl() {
+#    local url="$1"
+#    local dest_dir="$2"
+#    user_agents=("Mozilla/5.0 (Windows NT 10.0; Win64; x64)" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" "Mozilla/5.0 (X11; Linux x86_64)")
+#    user_agent="${user_agents[$RANDOM % ${#user_agents[@]}]}"
+#    curl --socks5-hostname 127.0.0.1:9050 \
+#         --user-agent "$user_agent" \
+#         --retry 3 --max-time 60 \
+#         --create-dirs --output "$dest_dir/$(basename "$url")" "$url" 2>&1
+#}
+#
+## Process URLs
+#for cname in "${class_names[@]}"; do
+#    class_dir="$raw_data_dir/$cname"
+#    find "$class_dir" -type f -name "urls.txt" | while read -r urls_file; do
+#        urls_dir="$(dirname "$urls_file")"
+#        echo "Processing URLs from: $urls_file"
+#        
+#        cat "$urls_file" | xargs -n 1 -P 20 -I {} bash -c '
+#            download_with_curl "{}" "'"$urls_dir"'"
+#            if [[ $? -ne 0 ]]; then
+#                echo "{}" >> failed_urls.log
+#                rotate_tor_circuit
+#            fi
+#        '
+#
+#        # Rotate Tor circuit after processing each file
+##        rotate_tor_circuit
+#
+#        # Retry failed downloads with gallery-dl
+#        if [[ -f failed_urls.log && -s failed_urls.log ]]; then
+#            echo "Retrying failed URLs with gallery-dl..."
+#            mv failed_urls.log temp_urls.txt
+#            while IFS= read -r url; do
+##                gallery_output=$(gallery-dl --verbose --no-mtime --dest "$urls_dir" \
+##                    --filename "{category}_{id}_{num}.{extension}" "$url" 2>&1)
+##                gallery_output=$(gallery-dl --verbose --no-mtime --dest "$urls_dir" \
+##                    --filename "{category}_{id}_{num}.{extension}" \
+##                    --proxy "socks5://127.0.0.1:9050" "$url" 2>&1)
+#                gallery_output=$(gallery-dl --config "$base_dir/.config/gallery-dl/config.json" \
+#                    --verbose --no-mtime --dest "$urls_dir" \
+#                    --filename "{category}_{id}_{num}.{extension}" \
+#                    "$url" 2>&1)
+#
+#                if [[ $? -eq 0 ]]; then
+#                    echo "Successfully downloaded with gallery-dl: $url"
+#                    sed -i '' "\|^$url\$|d" temp_urls.txt  # Remove successful URL
+#                elif echo "$gallery_output" | grep -q "429"; then
+#                    handle_429_error
+#                    rotate_tor_circuit
+#                else
+#                    echo "$url" >> gallery_failed_urls.log
+#                    rotate_tor_circuit
+#                fi
+#            done < temp_urls.txt
+#            rm temp_urls.txt
+#        fi
+#
+#        # Final fallback with Selenium and Tor
+#        if [[ -f gallery_failed_urls.log && -s gallery_failed_urls.log ]]; then
+#            echo "Retrying failed URLs with Selenium..."
+#            while IFS= read -r url; do
+#                python3 "$base_dir/fallback_selenium.py" "$url" "$urls_dir"
+#                if [[ $? -eq 0 ]]; then
+#                    echo "Successfully downloaded with Selenium: $url"
+#                    sed -i '' "\|^$url\$|d" gallery_failed_urls.log
+#                else
+#                    echo "Failed to process $url after all retries. Skipping."
+#                    rotate_tor_circuit
+#                fi
+#            done < gallery_failed_urls.log
+#            rm gallery_failed_urls.log
+#        fi
+#        
+##        rotate_tor_circuit
+#
+#        # Cleanup
+#        if [[ ! -s "$urls_file" ]]; then
+#            rm "$urls_file"
+#        fi
+#    done
+#done
+
+
+
 #!/bin/bash
 
 # Directories
@@ -537,10 +680,14 @@ declare -a class_names=(
 rotate_tor_circuit() {
     cookie_file="/usr/local/var/lib/tor/control_auth_cookie"
     if [[ -f "$cookie_file" ]]; then
-        COOKIE=$(cat "$cookie_file" | xxd -p -c 64 | tr -d '\n')
-        echo "Rotating Tor circuit..."
-        echo -e "AUTHENTICATE \"$COOKIE\"\nSIGNAL NEWNYM\nQUIT" | nc 127.0.0.1 9051
-        sleep 5
+        # Extract the hex string from the cookie file
+        COOKIE=$(xxd -ps "$cookie_file" | tr -d '\n')
+
+        # Validate the cookie length
+        if [[ ${#COOKIE} -ne 64 ]]; then
+            echo "Error: Authentication cookie length is invalid (${#COOKIE}). Expected 64."
+            exit 1
+        fi
     else
         echo "Tor authentication cookie not found at $cookie_file"
         exit 1
@@ -574,22 +721,17 @@ for cname in "${class_names[@]}"; do
             fi
         '
 
-        # Rotate Tor circuit after processing each file
-#        rotate_tor_circuit
-
         # Retry failed downloads with gallery-dl
         if [[ -f failed_urls.log && -s failed_urls.log ]]; then
             echo "Retrying failed URLs with gallery-dl..."
             mv failed_urls.log temp_urls.txt
             while IFS= read -r url; do
-#                gallery_output=$(gallery-dl --verbose --no-mtime --dest "$urls_dir" \
-#                    --filename "{category}_{id}_{num}.{extension}" "$url" 2>&1)
-                gallery_output=$(gallery-dl --verbose --no-mtime --dest "$urls_dir" \
+                gallery_output=$(gallery-dl --config "$base_dir/.config/gallery-dl/config.json" \
+                    --verbose --no-mtime --dest "$urls_dir" \
                     --filename "{category}_{id}_{num}.{extension}" \
-                    --proxy "socks5://127.0.0.1:9050" "$url" 2>&1)
+                    "$url" 2>&1)
 
-
-                if [[ $? -eq 0 ]]; then
+                if echo "$gallery_output" | grep -q 'HTTP/1.1" 200'; then
                     echo "Successfully downloaded with gallery-dl: $url"
                     sed -i '' "\|^$url\$|d" temp_urls.txt  # Remove successful URL
                 elif echo "$gallery_output" | grep -q "429"; then
@@ -607,7 +749,7 @@ for cname in "${class_names[@]}"; do
         if [[ -f gallery_failed_urls.log && -s gallery_failed_urls.log ]]; then
             echo "Retrying failed URLs with Selenium..."
             while IFS= read -r url; do
-                python3 "$scripts_dir/fallback_selenium.py" "$url" "$urls_dir"
+                python3 "$base_dir/fallback_selenium.py" "$url" "$urls_dir"
                 if [[ $? -eq 0 ]]; then
                     echo "Successfully downloaded with Selenium: $url"
                     sed -i '' "\|^$url\$|d" gallery_failed_urls.log
@@ -619,8 +761,6 @@ for cname in "${class_names[@]}"; do
             rm gallery_failed_urls.log
         fi
         
-#        rotate_tor_circuit
-
         # Cleanup
         if [[ ! -s "$urls_file" ]]; then
             rm "$urls_file"

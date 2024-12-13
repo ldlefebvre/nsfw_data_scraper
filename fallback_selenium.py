@@ -2459,6 +2459,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.firefox.service import Service
+from selenium.webdriver import FirefoxProfile
 from selenium.common.exceptions import TimeoutException
 import time
 import random
@@ -2471,14 +2472,14 @@ def is_reddit_url(url):
     """
     Checks if the given URL is a Reddit URL.
     """
-    return "reddit.com" in url
+    return "reddit" in url
 
 def check_url_status(url):
     """
     Checks the status of the given URL. Returns True if the status is 200-399 or if it's a Reddit URL with 403.
     """
     try:
-        response = requests.head(url, timeout=5, allow_redirects=True)
+        response = requests.head(url, timeout=15, allow_redirects=True)
         if 200 <= response.status_code < 400:
             return True
         if response.status_code == 403 and is_reddit_url(url):
@@ -2494,23 +2495,13 @@ def run_gallery_dl(url, output_dir):
     """
     Runs gallery-dl with the given URL and output directory, using a SOCKS proxy and additional options.
     """
-    user_agents = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-        "Mozilla/5.0 (X11; Linux x86_64)",
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)",
-        "Mozilla/5.0 (Android 11; Mobile; rv:89.0) Gecko/89.0 Firefox/89.0",
-    ]
-    user_agent = random.choice(user_agents)
-
     gallery_dl_command = [
         "gallery-dl",
-        "--proxy", "socks5://127.0.0.1:9050",
+        "--config", GALLERY_DL_CONFIG,
         "--verbose",
         "--no-mtime",
         "--dest", output_dir,
         "--filename", "{category}_{id}_{num}.{extension}",
-        "--user-agent", user_agent,
         url,
     ]
 
@@ -2521,13 +2512,15 @@ def run_gallery_dl(url, output_dir):
         )
         output = result.stdout.decode("utf-8")
         print(output)
-
-        # Check for HTTP errors in gallery-dl output
-        if "HTTPError" in output or "403 Forbidden" in output or "400 Bad Request" in output:
-            print("Gallery-dl encountered an HTTP error. Falling back to Selenium...")
+        
+        # Check for successful HTTP 200 responses in gallery-dl output
+        if 'HTTP/1.1" 200' in output:
+            print("Gallery-dl encountered some successful downloads.")
+            return True
+        else:
+            print("No successful downloads found. Falling back to Selenium...")
             return False
-
-        return True
+            
     except subprocess.CalledProcessError as e:
         print(f"Gallery-dl failed: {e.stderr.decode('utf-8')}")
         return False
@@ -2595,20 +2588,28 @@ def scrape_with_selenium(url, output_dir):
     """
     Scrapes images from a webpage using Selenium through a Tor proxy and saves them locally.
     """
+    
     options = Options()
     options.headless = True
-    proxy = Proxy()
-    proxy.proxy_type = ProxyType.MANUAL
-    proxy.socks_proxy = "127.0.0.1:9050"
-    proxy.socks_version = 5
-    options.proxy = proxy
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
-    service = Service(executable_path="/usr/local/bin/geckodriver")
-    driver = webdriver.Firefox(options=options, service=service)
+    # Directly define the proxy capabilities dictionary
+    proxy_dict = {
+        "proxyType": "manual",
+        "socksProxy": "127.0.0.1:9050",
+        "socksVersion": 5
+    }
+
+    options.set_capability("proxy", proxy_dict)
+    service = Service("/usr/local/bin/geckodriver")
+
+    driver = webdriver.Firefox(
+        options=options,
+        service=service
+    )
 
     try:
         print(f"Loading page: {url}")

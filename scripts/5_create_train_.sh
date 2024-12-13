@@ -46,9 +46,18 @@ do
 	fi
 done
 
-echo "Removing very large (>10M) and very small (<6K) images"
-find "$train_dir" -type 'f' -size +10M -delete
-find "$train_dir" -type 'f' -size -6k -delete
+#echo "Removing very large (>10M) and very small (<6K) images"
+#find "$train_dir" -type 'f' -size +10M -delete
+#find "$train_dir" -type 'f' -size -6k -delete
+
+mkdir -p "$train_dir/too_big"
+mkdir -p "$train_dir/too_small"
+
+echo "Moving very large (>10M) images to $train_dir/too_big"
+find "$train_dir" -type f -size +10M -exec mv {} "$train_dir/too_big" \;
+
+echo "Moving very small (<6K) images to $train_dir/too_small"
+find "$train_dir" -type f -size -6k -exec mv {} "$train_dir/too_small" \;
 
 echo "Number of files per class:"
 for subdir in $(ls "$train_dir")

@@ -14,6 +14,9 @@ Leave this running in a tab then open a new tab to run the following:
 docker build --no-cache --platform linux/amd64 -t nsfw_data_scraper:custom .
 gallery-dl --clear-cache reddit
 docker run -it --rm --platform linux/amd64 -v "$(pwd):/root/nsfw_data_scraper" nsfw_data_scraper:custom /bin/bash
+
+service tor restart
+
 bash /root/nsfw_data_scraper/scripts/runall.sh
 
 
@@ -127,6 +130,7 @@ brew services restart tor
 COOKIE=$(cat /usr/local/var/lib/tor/control_auth_cookie | xxd -p -c 64 | tr -d '\n')
 echo -e "AUTHENTICATE $COOKIE\nSIGNAL NEWNYM\nQUIT" | nc 127.0.0.1 9051
 
+To initialize the python environment to try out a script:
 python3 -m venv venv
 source venv/bin/activate
 pip install selenium requests beautifulsoup4
@@ -134,6 +138,19 @@ pip install pysocks
 pip install --upgrade pip
 pip install -U gallery-dl
 
+To try it out after having already run the venv with pip before:
+python3 -m venv venv
+source venv/bin/activate
+python3 fallback_selenium.py "url" "./output"
+
+Other useful tor commands:
+stat --printf="%s\n" /usr/local/var/lib/tor/control_auth_cookie
+xxd -ps /usr/local/var/lib/tor/control_auth_cookie | wc -c
+COOKIE=$(xxd -ps /usr/local/var/lib/tor/control_auth_cookie)
+echo "Cookie length: ${#COOKIE}"
+python3 -c "print(len(open('/usr/local/var/lib/tor/control_auth_cookie', 'rb').read()))"
+ls -l /usr/local/var/lib/tor/control_auth_cookie
+service tor restart
 
 
 
