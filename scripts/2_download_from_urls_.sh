@@ -660,6 +660,157 @@
 
 
 
+##!/bin/bash
+#
+## Directories
+#scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+#base_dir="$(dirname "$scripts_dir")"
+#raw_data_dir="$base_dir/raw_data"
+#
+## Class names
+#declare -a class_names=(
+##    "neutral"
+#   "porn"
+##    "drawings"
+#    # "sexy"
+##    "hentai"
+#)
+#
+## Rotate Tor Circuit
+#rotate_tor_circuit() {
+#    cookie_file="/usr/local/var/lib/tor/control_auth_cookie"
+#    if [[ -f "$cookie_file" ]]; then
+#        # Extract the hex string from the cookie file
+#        COOKIE=$(xxd -ps "$cookie_file" | tr -d '\n')
+#
+#        # Validate the cookie length
+#        if [[ ${#COOKIE} -ne 64 ]]; then
+#            echo "Error: Authentication cookie length is invalid (${#COOKIE}). Expected 64."
+#            exit 1
+#        fi
+#    else
+#        echo "Tor authentication cookie not found at $cookie_file"
+#        exit 1
+#    fi
+#}
+#
+## Download function
+#download_with_curl() {
+#    local url="$1"
+#    local dest_dir="$2"
+#    user_agents=("Mozilla/5.0 (Windows NT 10.0; Win64; x64)" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" "Mozilla/5.0 (X11; Linux x86_64)")
+#    user_agent="${user_agents[$RANDOM % ${#user_agents[@]}]}"
+#    curl --socks5-hostname 127.0.0.1:9050 \
+#         --user-agent "$user_agent" \
+#         --retry 3 --max-time 60 \
+#         --create-dirs --output "$dest_dir/$(basename "$url")" "$url" 2>&1
+#}
+#
+#handle_429_error() {
+#    echo "429 Too Many Requests detected. Pausing for cooldown..."
+#    sleep 15
+#}
+#
+## Process URLs
+#for cname in "${class_names[@]}"; do
+#    class_dir="$raw_data_dir/$cname"
+#    find "$class_dir" -type f -name "urls.txt" | while read -r urls_file; do
+#        urls_dir="$(dirname "$urls_file")"
+#        failed_urls_log="${urls_dir}/failed_urls.log"
+#        temp_urls_log="${urls_dir}/temp_urls.txt"
+#        gallery_failed_urls_log="${urls_dir}/gallery_failed_urls.log"
+#        
+#        echo "Processing URLs from: $urls_file"
+#
+##        cat "$urls_file" | xargs -n 1 -P 20 -I {} bash -c '
+##            download_with_curl "{}" "'"$urls_dir"'"
+##            if [[ $? -ne 0 ]]; then
+##                echo "{}" >> failed_urls.log
+##                rotate_tor_circuit
+##            fi
+##        '
+#
+#        export -f download_with_curl
+#        export -f rotate_tor_circuit
+#        export urls_dir
+#        export failed_urls_log
+#        
+#        # Step 1: Initial download using cURL
+#        cat "$urls_file" | xargs -n 1 -P 20 -I {} bash -c '
+#            download_with_curl "{}" "'"$urls_dir"'"
+#            if [[ $? -ne 0 ]]; then
+#                echo "{}" >> "'"$failed_urls_log"'"
+#                rotate_tor_circuit
+#            fi
+#        '
+#
+##        cat "$urls_file" | xargs -n 1 -P 20 -I {} bash -c '
+##            download_with_curl "{}" "'"$urls_dir"'"
+##            if [[ $? -ne 0 ]]; then
+##                echo "{}" >> failed_urls.log
+##                rotate_tor_circuit
+##            fi
+##        '
+#
+#        # Retry failed downloads with gallery-dl
+#        if [[ -f failed_urls.log && -s failed_urls.log ]]; then
+#            echo "Retrying failed URLs with gallery-dl..."
+#            mv failed_urls.log temp_urls.txt
+#            while IFS= read -r url; do
+#                gallery_output=$(gallery-dl --config "$base_dir/.config/gallery-dl/config.json" \
+#                    --verbose --no-mtime --dest "$urls_dir" \
+#                    --filename "{category}_{id}_{num}.{extension}" \
+#                    "$url" 2>&1)
+#
+#                if echo "$gallery_output" | grep -q 'HTTP/1.1" 200'; then
+#                    echo "Successfully downloaded with gallery-dl: $url"
+#                    if [[ "$OSTYPE" == "darwin"* ]]; then
+#                        sed -i '' "\|^$url\$|d" temp_urls.txt  # macOS syntax
+#                    else
+#                        sed -i "\|^$url\$|d" temp_urls.txt  # Linux syntax
+#                    fi
+#                elif echo "$gallery_output" | grep -q "429"; then
+#                    echo "429 Too Many Requests detected for URL: $url. Rotating Tor circuit..."
+#                    rotate_tor_circuit
+#                    handle_429_error
+#                else
+#                    echo "Failed to download with gallery-dl: $url"
+#                    echo "$url" >> gallery_failed_urls.log
+#                    rotate_tor_circuit
+#                fi
+#            done < temp_urls.txt
+#            rm temp_urls.txt
+#        fi
+#
+#        # Final fallback with Selenium and Tor
+#        if [[ -f gallery_failed_urls.log && -s gallery_failed_urls.log ]]; then
+#            echo "Retrying failed URLs with Selenium..."
+#            while IFS= read -r url; do
+#                python3 "$base_dir/fallback_selenium.py" "$url" "$urls_dir"
+#                if [[ $? -eq 0 ]]; then
+#                    echo "Successfully downloaded with Selenium: $url"
+#                    if [[ "$OSTYPE" == "darwin"* ]]; then
+#                        sed -i '' "\|^$url\$|d" gallery_failed_urls.log
+#                    else
+#                        sed -i "\|^$url\$|d" gallery_failed_urls.log
+#                    fi
+#                else
+#                    echo "Failed to process $url after all retries. Skipping."
+#                    rotate_tor_circuit
+#                fi
+#            done < gallery_failed_urls.log
+#            rm gallery_failed_urls.log
+#        fi
+#
+#        # Cleanup
+#        if [[ ! -s "$urls_file" ]]; then
+#            rm "$urls_file"
+#        fi
+#    done
+#done
+
+
+
 #!/bin/bash
 
 # Directories
@@ -698,7 +849,17 @@ rotate_tor_circuit() {
 download_with_curl() {
     local url="$1"
     local dest_dir="$2"
-    user_agents=("Mozilla/5.0 (Windows NT 10.0; Win64; x64)" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" "Mozilla/5.0 (X11; Linux x86_64)")
+    user_agents=(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+        "Mozilla/5.0 (Android 12; Mobile; rv:109.0) Gecko/109.0 Firefox/117.0"
+        "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Mobile Safari/537.36"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:117.0) Gecko/20100101 Firefox/117.0"
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Safari/605.1.15"
+        "Mozilla/5.0 (iPad; CPU OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
+    )
     user_agent="${user_agents[$RANDOM % ${#user_agents[@]}]}"
     curl --socks5-hostname 127.0.0.1:9050 \
          --user-agent "$user_agent" \
@@ -716,31 +877,30 @@ for cname in "${class_names[@]}"; do
     class_dir="$raw_data_dir/$cname"
     find "$class_dir" -type f -name "urls.txt" | while read -r urls_file; do
         urls_dir="$(dirname "$urls_file")"
+        failed_urls_log="${urls_dir}/failed_urls.log"
+        temp_urls_log="${urls_dir}/temp_urls.txt"
+        gallery_failed_urls_log="${urls_dir}/gallery_failed_urls.log"
+        
         echo "Processing URLs from: $urls_file"
-
-#        cat "$urls_file" | xargs -n 1 -P 20 -I {} bash -c '
-#            download_with_curl "{}" "'"$urls_dir"'"
-#            if [[ $? -ne 0 ]]; then
-#                echo "{}" >> failed_urls.log
-#                rotate_tor_circuit
-#            fi
-#        '
 
         export -f download_with_curl
         export -f rotate_tor_circuit
-
+        export urls_dir
+        export failed_urls_log
+        
+        # Step 1: Initial download using cURL
         cat "$urls_file" | xargs -n 1 -P 20 -I {} bash -c '
             download_with_curl "{}" "'"$urls_dir"'"
             if [[ $? -ne 0 ]]; then
-                echo "{}" >> failed_urls.log
+                echo "{}" >> "'"$failed_urls_log"'"
                 rotate_tor_circuit
             fi
         '
 
         # Retry failed downloads with gallery-dl
-        if [[ -f failed_urls.log && -s failed_urls.log ]]; then
+        if [[ -f "$failed_urls_log" && -s "$failed_urls_log" ]]; then
             echo "Retrying failed URLs with gallery-dl..."
-            mv failed_urls.log temp_urls.txt
+            mv "$failed_urls_log" "$temp_urls_log"
             while IFS= read -r url; do
                 gallery_output=$(gallery-dl --config "$base_dir/.config/gallery-dl/config.json" \
                     --verbose --no-mtime --dest "$urls_dir" \
@@ -750,39 +910,42 @@ for cname in "${class_names[@]}"; do
                 if echo "$gallery_output" | grep -q 'HTTP/1.1" 200'; then
                     echo "Successfully downloaded with gallery-dl: $url"
                     if [[ "$OSTYPE" == "darwin"* ]]; then
-                        sed -i '' "\|^$url\$|d" temp_urls.txt  # macOS syntax
+                        sed -i '' "\|^$url\$|d" "$temp_urls_log"  # macOS syntax
                     else
-                        sed -i "\|^$url\$|d" temp_urls.txt  # Linux syntax
+                        sed -i "\|^$url\$|d" "$temp_urls_log"  # Linux syntax
                     fi
                 elif echo "$gallery_output" | grep -q "429"; then
+                    echo "429 Too Many Requests detected for URL: $url. Rotating Tor circuit..."
                     rotate_tor_circuit
+                    echo "$url" >> "$gallery_failed_urls_log"
                     handle_429_error
                 else
-                    echo "$url" >> gallery_failed_urls.log
+                    echo "Failed to download with gallery-dl: $url"
+                    echo "$url" >> "$gallery_failed_urls_log"
                     rotate_tor_circuit
                 fi
-            done < temp_urls.txt
-            rm temp_urls.txt
+            done < "$temp_urls_log"
+            rm "$temp_urls_log"
         fi
 
         # Final fallback with Selenium and Tor
-        if [[ -f gallery_failed_urls.log && -s gallery_failed_urls.log ]]; then
+        if [[ -f "$gallery_failed_urls_log" && -s "$gallery_failed_urls_log" ]]; then
             echo "Retrying failed URLs with Selenium..."
             while IFS= read -r url; do
                 python3 "$base_dir/fallback_selenium.py" "$url" "$urls_dir"
                 if [[ $? -eq 0 ]]; then
                     echo "Successfully downloaded with Selenium: $url"
                     if [[ "$OSTYPE" == "darwin"* ]]; then
-                        sed -i '' "\|^$url\$|d" gallery_failed_urls.log
+                        sed -i '' "\|^$url\$|d" "$gallery_failed_urls_log"
                     else
-                        sed -i "\|^$url\$|d" gallery_failed_urls.log
+                        sed -i "\|^$url\$|d" "$gallery_failed_urls_log"
                     fi
                 else
                     echo "Failed to process $url after all retries. Skipping."
                     rotate_tor_circuit
                 fi
-            done < gallery_failed_urls.log
-            rm gallery_failed_urls.log
+            done < "$gallery_failed_urls_log"
+            rm "$gallery_failed_urls_log"
         fi
 
         # Cleanup
