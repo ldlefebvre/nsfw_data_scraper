@@ -5,7 +5,7 @@
 #
 #if [[ "$1" == "test" ]]
 #then
-#	echo "Running in test mode" 
+#	echo "Running in test mode"
 #	source_urls_dirname="source_urls_test"
 #fi
 #
@@ -26,7 +26,7 @@
 #for cname in "${class_names[@]}"
 #do
 #	echo "--- Getting images for class: $cname"
-#	
+#
 #	while read url
 #	do
 #		echo "------ url: $url"
@@ -799,7 +799,7 @@
 #                    handle_429_error
 #                else
 #                    echo "gallery-dl failed for $url. Attempting with ripme..."
-#                    
+#
 #                    # Try ripme as a fallback
 #                    message2=$(java -jar "$ripme_jar" \
 #                             --skip404 \
@@ -811,7 +811,7 @@
 #                            handle_429_error
 #                        else
 #                            echo "ripme failed for $url. Attempting with yt-dlp..."
-#                            
+#
 #                            # Try yt-dlp as the final fallback
 #                            message3=$(yt-dlp --verbose --no-mtime \
 #                                       --output "$images_dir/%(title)s_%(autonumber)s.%(ext)s" "$url" 2>&1) || {
@@ -1066,7 +1066,7 @@
 #    local output
 #
 #    echo "Trying $tool for URL: $url"
-#    
+#
 #        # Define an array of User-Agent strings
 #    user_agents=(
 #        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
@@ -1078,7 +1078,7 @@
 #
 #    # Select a random User-Agent
 #    user_agent="${user_agents[$RANDOM % ${#user_agents[@]}]}"
-#    
+#
 ##    gallery-dl --config "$base_dir/.config/gallery-dl/config.json" \
 ##                   --verbose --no-mtime --dest "$images_dir" \
 ##                   --filename "{category}_{id}.{extension}" "$url" || {
@@ -1103,20 +1103,20 @@
 #                                --proxy "socks5://127.0.0.1:9050" \
 #                                --user-agent "$user_agent" "$url" 2>&1) || return 1
 #            ;;
-#        
+#
 #        ripme)
 #            output=$(http_proxy="socks5://127.0.0.1:9050" \
 #                     https_proxy="socks5://127.0.0.1:9050" \
 #                     java -Dhttp.agent="$user_agent" -jar "$ripme_jar" --skip404 --no-prop-file \
 #                     --ripsdirectory "$dest_dir" --url "$url" 2>&1) || return 1
 #            ;;
-#        
+#
 #        yt-dlp)
 #            output=$(yt-dlp --verbose --no-mtime --proxy "socks5://127.0.0.1:9050" \
 #                            --user-agent "$user_agent" \
 #                            --output "$dest_dir/%(title)s_%(autonumber)s.%(ext)s" "$url" 2>&1) || return 1
 #            ;;
-#            
+#
 ##        gallery-dl)
 ##            output=$(gallery-dl --verbose --no-mtime --dest "$dest_dir" \
 ##                                --filename "{category}_{id}_{num}.{extension}" "$url" 2>&1) || return 1
@@ -1140,7 +1140,7 @@
 ##            output=$(gallery-dl --verbose --no-mtime --dest "$dest_dir" \
 ##                                --filename "{category}_{id}_{num}.{extension}" "$url" 2>&1) || return 1
 ##            ;;
-##        
+##
 ##
 ##        ripme)
 ##            output=$(java -jar "$ripme_jar" --skip404 --no-prop-file --ripsdirectory "$dest_dir" \
@@ -1224,10 +1224,10 @@
 #            fi
 #        done
 #    done
-#    
+#
 #    # Rotate Tor circuit before falling back to Selenium
 #    rotate_tor_circuit
-#    
+#
 #    # Fallback to Selenium with Tor
 #    echo "All tools failed. Falling back to Selenium with Tor for URL: $url"
 #    python3 "$scripts_dir/fallback_selenium.py" "$url" "$dest_dir"
@@ -1235,7 +1235,7 @@
 #        echo "Successfully downloaded with Selenium: $url"
 #        return 0
 #    fi
-#    
+#
 #    # If all tools fail, log it
 #    echo "All tools failed for $url."
 #    rotate_tor_circuit
@@ -1349,7 +1349,7 @@
 #    local exit_code
 #
 #    echo "Trying $tool for URL: $url"
-#    
+#
 #    # Define an array of User-Agent strings
 #    user_agents=(
 #        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
@@ -1375,7 +1375,7 @@
 ##                    --user-agent "$user_agent" "$url" 2>&1)
 #            exit_code=$?
 #            ;;
-#        
+#
 #        ripme)
 #            output=$(java -Dhttp.agent="$user_agent" -jar "$ripme_jar" --skip404 --no-prop-file \
 #                         --ripsdirectory "$dest_dir" --url "$url" 2>&1)
@@ -1386,11 +1386,11 @@
 #            fi
 #            exit_code=$?
 #            ;;
-#        
+#
 ##        ripme)
 ##            output=$(java -Dhttp.agent="$user_agent" -jar "$ripme_jar" --skip404 --no-prop-file \
 ##                     --ripsdirectory "$dest_dir" --url "$url" 2>&1)
-##            
+##
 ##            # Check for common failure patterns in the output
 ##            if echo "$output" | grep -q -E "Error|Failed|Status Code"; then
 ##                echo "Ripme encountered an error: $output"
@@ -1416,7 +1416,7 @@
 ##                     --ripsdirectory "$dest_dir" --url "$url" 2>&1)
 ##            exit_code=$?
 ##            ;;
-#        
+#
 #        yt-dlp)
 ##            output=$(yt-dlp --verbose --no-mtime --output "$dest_dir/%(title)s_%(autonumber)s.%(ext)s" \
 ##                    "$url" 2>&1) || return 1
@@ -1425,7 +1425,7 @@
 #                            --output "$dest_dir/%(title)s_%(autonumber)s.%(ext)s" "$url" 2>&1)
 #            exit_code=$?
 #            ;;
-#        
+#
 #        *)
 #            echo "Unknown tool: $tool"
 #            return 1
@@ -1455,7 +1455,7 @@
 ##    local output
 ##
 ##    echo "Trying $tool for URL: $url"
-##    
+##
 ##        # Define an array of User-Agent strings
 ##    user_agents=(
 ##        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
@@ -1476,21 +1476,21 @@
 ###                                --proxy "socks5://127.0.0.1:9050" \
 ###                                --user-agent "$user_agent" "$url" 2>&1) || return 1
 ###            ;;
-###        
+###
 ###        ripme)
 ###            output=$(http_proxy="socks5://127.0.0.1:9050" \
 ###                     https_proxy="socks5://127.0.0.1:9050" \
 ###                     java -Dhttp.agent="$user_agent" -jar "$ripme_jar" --skip404 --no-prop-file \
 ###                     --ripsdirectory "$dest_dir" --url "$url" 2>&1) || return 1
 ###            ;;
-###        
+###
 ###        yt-dlp)
 ###            output=$(yt-dlp --verbose --no-mtime --proxy "socks5://127.0.0.1:9050" \
 ###                            --user-agent "$user_agent" \
 ###                            --output "$dest_dir/%(title)s_%(autonumber)s.%(ext)s" "$url" 2>&1) || return 1
 ###            ;;
 ###    esac
-##    
+##
 ##    case $tool in
 ##        gallery-dl)
 ##            output=$(gallery-dl --verbose --no-mtime --dest "$dest_dir" \
@@ -1572,15 +1572,15 @@
 #    for tool in "${tools[@]}"; do
 #        for ((attempt=1; attempt<=retries; attempt++)); do
 #            echo "Attempt $attempt with $tool for URL: $url"
-#            
+#
 #            # Run the tool and capture the return code
 #            if attempt_download "$tool" "$url" "$dest_dir"; then
 #                echo "$tool succeeded for URL: $url"
 #                return 0
 #            fi
-#            
+#
 #            local exit_code=$?
-#            
+#
 #            # Handle specific errors
 #            if [[ $exit_code -eq 2 ]]; then
 #                echo "Retrying due to 429 error with $tool..."
@@ -1592,11 +1592,11 @@
 #        done
 #        echo "Moving to the next tool for URL: $url"
 #    done
-#    
+#
 #    # Rotate Tor circuit before falling back to Selenium
 #    echo "All tools failed. Rotating Tor circuit before fallback..."
 #    rotate_tor_circuit
-#    
+#
 #    # Fallback to Selenium with Tor
 #    echo "Falling back to Selenium with Tor for URL: $url"
 #    if python3 "$base_dir/fallback_selenium.py" "$url" "$dest_dir"; then
@@ -1675,9 +1675,9 @@ raw_data_dir="$base_dir/raw_data"
 #declare -a class_names=("neutral" "porn" "drawings" "sexy" "hentai")
 declare -a class_names=(
 #    "neutral"
-#    "porn"
+   "porn"
 #    "drawings"
-    "sexy"
+    # "sexy"
 #    "hentai"
 )
 
@@ -1717,7 +1717,7 @@ attempt_download() {
     local exit_code
 
     echo "Trying $tool for URL: $url"
-    
+
     # Define an array of User-Agent strings
     user_agents=(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
@@ -1771,7 +1771,7 @@ attempt_download() {
                 return 0
             fi
             ;;
-        
+
         *)
             echo "Unknown tool: $tool"
             return 1
@@ -1821,15 +1821,15 @@ process_url() {
     for tool in "${tools[@]}"; do
         for ((attempt=1; attempt<=retries; attempt++)); do
             echo "Attempt $attempt with $tool for URL: $url"
-            
+
             # Run the tool and capture the return code
             if attempt_download "$tool" "$url" "$dest_dir"; then
                 echo "$tool succeeded for URL: $url"
                 return 0
             fi
-            
+
             local exit_code=$?
-            
+
             # Handle specific errors
             if [[ $exit_code -eq 2 ]]; then
                 echo "Retrying due to 429 error with $tool..."
@@ -1841,11 +1841,11 @@ process_url() {
         done
         echo "Moving to the next tool for URL: $url"
     done
-    
+
     # Rotate Tor circuit before falling back to Selenium
     echo "All tools failed. Rotating Tor circuit before fallback..."
     rotate_tor_circuit
-    
+
     # Fallback to Selenium with Tor
     echo "Falling back to Selenium with Tor for URL: $url"
     if python3 "$base_dir/fallback_selenium.py" "$url" "$dest_dir"; then

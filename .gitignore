@@ -10,3 +10,7 @@ gallery-dl
 venv
 output
 prior_dockerfile.txt
+gallery_failed_urls.log
+geckodriver.log
+temp_urls.txt
+failed_urls.log

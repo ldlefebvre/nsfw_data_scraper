@@ -352,7 +352,7 @@
 #            for ((retry=1; retry<=max_retries; retry++)); do
 #                gallery_output=$(gallery-dl --verbose --no-mtime --dest "$urls_dir" \
 #                    --filename "{category}_{id}_{num}.{extension}" "$url" 2>&1)
-#                
+#
 #                if [[ $? -eq 0 ]]; then
 #                    echo "Successfully downloaded with gallery-dl: $url"
 #                    sed -i "\|^$url\$|d" "$urls_file"  # Remove the URL from `urls.txt` if successful
@@ -371,7 +371,7 @@
 #            if [[ "$success" = false ]]; then
 #                for ((retry=1; retry<=max_retries; retry++)); do
 #                    wget_output=$(wget -nc --timeout=5 --tries=2 -P "$urls_dir" "$url" 2>&1)
-#                    
+#
 #                    if [[ $? -eq 0 ]]; then
 #                        echo "Successfully downloaded with wget: $url"
 #                        sed -i "\|^$url\$|d" "$urls_file"  # Remove the URL from `urls.txt` if successful
@@ -444,7 +444,7 @@
 #
 #            max_retries=2
 #            success=false
-#            
+#
 #            # Attempt wget
 #            if [[ "$success" = false ]]; then
 #                for ((retry=1; retry<=max_retries; retry++)); do
@@ -457,7 +457,7 @@
 ##                         --create-dirs \
 ##                         --output "$dest_dir/$(basename $url)" \
 ##                         "$url" 2>&1
-#                         
+#
 #                    xargs -n 1 -P 5 -I {} curl --socks5-hostname 127.0.0.1:9050 \
 #                         --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
 #                         --retry 3 --max-time 60 --create-dirs --output "$dest_dir/$(basename "{}")" "{}" \
@@ -493,7 +493,7 @@
 #                    break
 #                fi
 #            done
-#            
+#
 #            # Attempt Selenium with Tor
 #            if [[ "$success" = false ]]; then
 #                echo "Fallback to Selenium for URL: $url"
@@ -592,7 +592,7 @@
 #    find "$class_dir" -type f -name "urls.txt" | while read -r urls_file; do
 #        urls_dir="$(dirname "$urls_file")"
 #        echo "Processing URLs from: $urls_file"
-#        
+#
 #        cat "$urls_file" | xargs -n 1 -P 20 -I {} bash -c '
 #            download_with_curl "{}" "'"$urls_dir"'"
 #            if [[ $? -ne 0 ]]; then
@@ -648,7 +648,7 @@
 #            done < gallery_failed_urls.log
 #            rm gallery_failed_urls.log
 #        fi
-#        
+#
 ##        rotate_tor_circuit
 #
 #        # Cleanup
@@ -670,9 +670,9 @@ raw_data_dir="$base_dir/raw_data"
 # Class names
 declare -a class_names=(
 #    "neutral"
-#    "porn"
+   "porn"
 #    "drawings"
-    "sexy"
+    # "sexy"
 #    "hentai"
 )
 
@@ -706,13 +706,29 @@ download_with_curl() {
          --create-dirs --output "$dest_dir/$(basename "$url")" "$url" 2>&1
 }
 
+handle_429_error() {
+    echo "429 Too Many Requests detected. Pausing for cooldown..."
+    sleep 15
+}
+
 # Process URLs
 for cname in "${class_names[@]}"; do
     class_dir="$raw_data_dir/$cname"
     find "$class_dir" -type f -name "urls.txt" | while read -r urls_file; do
         urls_dir="$(dirname "$urls_file")"
         echo "Processing URLs from: $urls_file"
-        
+
+#        cat "$urls_file" | xargs -n 1 -P 20 -I {} bash -c '
+#            download_with_curl "{}" "'"$urls_dir"'"
+#            if [[ $? -ne 0 ]]; then
+#                echo "{}" >> failed_urls.log
+#                rotate_tor_circuit
+#            fi
+#        '
+
+        export -f download_with_curl
+        export -f rotate_tor_circuit
+
         cat "$urls_file" | xargs -n 1 -P 20 -I {} bash -c '
             download_with_curl "{}" "'"$urls_dir"'"
             if [[ $? -ne 0 ]]; then
@@ -733,10 +749,14 @@ for cname in "${class_names[@]}"; do
 
                 if echo "$gallery_output" | grep -q 'HTTP/1.1" 200'; then
                     echo "Successfully downloaded with gallery-dl: $url"
-                    sed -i '' "\|^$url\$|d" temp_urls.txt  # Remove successful URL
+                    if [[ "$OSTYPE" == "darwin"* ]]; then
+                        sed -i '' "\|^$url\$|d" temp_urls.txt  # macOS syntax
+                    else
+                        sed -i "\|^$url\$|d" temp_urls.txt  # Linux syntax
+                    fi
                 elif echo "$gallery_output" | grep -q "429"; then
-                    handle_429_error
                     rotate_tor_circuit
+                    handle_429_error
                 else
                     echo "$url" >> gallery_failed_urls.log
                     rotate_tor_circuit
@@ -752,7 +772,11 @@ for cname in "${class_names[@]}"; do
                 python3 "$base_dir/fallback_selenium.py" "$url" "$urls_dir"
                 if [[ $? -eq 0 ]]; then
                     echo "Successfully downloaded with Selenium: $url"
-                    sed -i '' "\|^$url\$|d" gallery_failed_urls.log
+                    if [[ "$OSTYPE" == "darwin"* ]]; then
+                        sed -i '' "\|^$url\$|d" gallery_failed_urls.log
+                    else
+                        sed -i "\|^$url\$|d" gallery_failed_urls.log
+                    fi
                 else
                     echo "Failed to process $url after all retries. Skipping."
                     rotate_tor_circuit
@@ -760,7 +784,7 @@ for cname in "${class_names[@]}"; do
             done < gallery_failed_urls.log
             rm gallery_failed_urls.log
         fi
-        
+
         # Cleanup
         if [[ ! -s "$urls_file" ]]; then
             rm "$urls_file"

@@ -2591,8 +2591,10 @@ def scrape_with_selenium(url, output_dir):
     
     options = Options()
     options.headless = True
+    # Remove if unnecessary
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
+    # Remove if unnecessary
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
