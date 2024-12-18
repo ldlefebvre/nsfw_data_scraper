@@ -1,9 +1,5 @@
 # Laurent's Read Me
 
-
-Launch the vpn to avoid ip address block if needed such as with Norton Security VPN or such. How to check current IP in terminal:
-curl ifconfig.me
-
 Codes to run in terminal:
 
 To listen to files added in directory to change name in case it contains None to avoid overwriting:
@@ -18,6 +14,18 @@ docker run -it --rm --platform linux/amd64 -v "$(pwd):/root/nsfw_data_scraper" n
 service tor restart
 
 bash /root/nsfw_data_scraper/scripts/runall.sh
+
+
+
+
+
+Launch the vpn to avoid ip address block if needed such as with Norton Security VPN or such. How to check current IP in terminal:
+curl ifconfig.me
+To know your local machine ip address for file sharing:
+ipconfig getifaddr en0
+To transfer dataset to desktop to train model afterword, make sure on mac file sharing is on in settings, that in options things are configured and the folder is in shared
+To check gpu and memory usage:
+watch -n 1 nvidia-smi
 
 
 .config/gallery-dl/config.json

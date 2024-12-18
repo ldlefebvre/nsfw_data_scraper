@@ -2589,6 +2589,15 @@ def scrape_with_selenium(url, output_dir):
     Scrapes images from a webpage using Selenium through a Tor proxy and saves them locally.
     """
     
+    # Check if the output_dir ends with 'IMAGES'
+    if os.path.basename(output_dir).lower() == "images":
+        # Create a unique subdirectory
+        timestamp = int(time.time() * 1000)  # Current timestamp in milliseconds
+        random_id = random.randint(1000, 9999)  # Random ID to ensure uniqueness
+        output_dir = os.path.join(output_dir, f"{timestamp}_{random_id}")
+        os.makedirs(output_dir, exist_ok=True)
+        print(f"Updated output directory to unique path: {output_dir}")
+    
     options = Options()
     options.headless = True
     # Remove if unnecessary
