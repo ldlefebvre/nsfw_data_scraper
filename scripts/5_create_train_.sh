@@ -76,12 +76,12 @@ data_dir="$base_dir/data"
 removed_dir="$base_dir/removed_image"
 
 declare -a class_names=(
-#    "neutral"
-#    "drawings"
-    # "sexy"
-   "porn"
-#    "hentai"
-    )
+    "neutral"
+    "drawings"
+    "sexy"
+    "porn"
+    "hentai"
+)
 
 train_dir="$data_dir/train"
 mkdir -p "$train_dir"

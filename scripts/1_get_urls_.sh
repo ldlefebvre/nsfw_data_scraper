@@ -1674,11 +1674,11 @@ raw_data_dir="$base_dir/raw_data"
 
 #declare -a class_names=("neutral" "porn" "drawings" "sexy" "hentai")
 declare -a class_names=(
-#    "neutral"
-   "porn"
-#    "drawings"
-    # "sexy"
-#    "hentai"
+    "neutral"
+    "porn"
+    "drawings"
+    "sexy"
+    "hentai"
 )
 
 # Ensure necessary tools are installed

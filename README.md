@@ -26,6 +26,11 @@ ipconfig getifaddr en0
 To transfer dataset to desktop to train model afterword, make sure on mac file sharing is on in settings, that in options things are configured and the folder is in shared
 To check gpu and memory usage:
 watch -n 1 nvidia-smi
+To delete all .Identifier file in a folder:
+find . -name "*.Identifier" -type f -delete
+Download the right Cuda here:
+https://developer.nvidia.com/cuda-11-8-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=WSL-Ubuntu&target_version=2.0&target_type=deb_network
+For my set up, select: Linux, x86_64 WSL-Ubuntu 2.0 deb(network)
 
 
 .config/gallery-dl/config.json
@@ -162,6 +167,30 @@ echo "Cookie length: ${#COOKIE}"
 python3 -c "print(len(open('/usr/local/var/lib/tor/control_auth_cookie', 'rb').read()))"
 ls -l /usr/local/var/lib/tor/control_auth_cookie
 service tor restart
+
+
+Useful AI commands:
+pip show tensorflow
+lsb_release -a
+uname -m
+cat /proc/version
+wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-keyring_1.0-1_all.deb
+sudo dpkg -i cuda-keyring_1.0-1_all.deb
+sudo apt-get update
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+sudo apt-get update
+sudo apt-get -y install cuda
+To clear cache after running the model if the memory is through the roof:
+sudo sync && sudo sysctl -w vm.drop_caches=3
+pip install numba
+pip install matplotlib
+nmap -sP [IP]
+ping [IP]
+nmap -p 22 [IP]
+nmap -p- [IP]
+nmap -sV [IP]
+nmap -T4 -p- [IP]
+
 
 
 

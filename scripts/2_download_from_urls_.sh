@@ -820,11 +820,11 @@ raw_data_dir="$base_dir/raw_data"
 
 # Class names
 declare -a class_names=(
-#    "neutral"
-   "porn"
-#    "drawings"
-    # "sexy"
-#    "hentai"
+    "neutral"
+    "porn"
+    "drawings"
+    "sexy"
+    "hentai"
 )
 
 # Rotate Tor Circuit
